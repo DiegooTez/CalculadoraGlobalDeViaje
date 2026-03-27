@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- CONFIGURACIÓN DE ICONO PARA CELULAR (.png) -->
+    <link rel="apple-touch-icon" href="foto1.png">
+    <link rel="icon" type="image/png" href="foto1.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Calculadora">
+
+    <title>Calculadora de Viaje</title>
+    <style>
+        :root {
+            --primary: #0081c9;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #333;
+            --border: #f0f0f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: env(safe-area-inset-top) 5px 8px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header { text-align: center; margin-bottom: 2px; }
+
+        h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-weight: 800;
+        }
+
+        .mini-flag {
+            width: 24px;
+            height: auto;
+            border-radius: 2px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 8px 12px;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            margin-bottom: 2px;
+            position: relative;
+        }
+
+        /* 1. RESULTADO / REFERENCIA */
+        .result-container {
+            background: linear-gradient(135deg, #f0faff 0%, #e6f4ff 100%);
+            padding: 8px;
+            border-radius: 18px;
+            text-align: center;
+            border: 2px solid #bde0ff;
+            position: relative;
+        }
+
+        .edit-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--primary);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .result-label {
+            font-size: 0.7rem;
+            color: var(--primary);
+            margin-bottom: 2px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        /* 2. BOTÓN SWAP */
+        .swap-btn-container {
+            display: flex;
+            justify-content: center;
+            margin: -15px 0 -8px 0;
+            position: relative;
+            z-index: 20;
+        }
+
+        .btn-swap {
+            background: var(--primary);
+            color: white;
+            border: 3px solid white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,129,201,0.15);
+            cursor: pointer;
+        }
+
+        /* 3. INGRESO VALOR */
+        .input-group { margin-bottom: 10px; margin-top: 2px; }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #777;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        input#amount {
+            width: 100%;
+            padding: 6px 10px 6px 50px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border: 2px solid #f2f2f2;
+            border-radius: 12px;
+            outline: none;
+            color: var(--text);
+            background: #fff;
+        }
+
+        .flag-icon-input {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 35px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 4. GRILLA 4 MONEDAS */
+        .currency-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .currency-slot { position: relative; width: 100%; }
+
+        .btn-toggle {
+            width: 100%;
+            padding: 8px 4px;
+            border: 1.5px solid #f2f2f2;
+            border-radius: 15px;
+            background: #fafafa;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: #bbb;
+        }
+
+        .btn-toggle .btn-flag { width: 30px; height: 20px; border-radius: 2px; overflow: hidden; }
+        .btn-toggle .code { font-size: 0.8rem; }
+        .btn-toggle .name { font-size: 0.55rem; text-transform: uppercase; opacity: 0.7; }
+
+        .btn-toggle.active {
+            background: #fff; border-color: var(--primary); color: var(--primary); box-shadow: 0 3px 8px rgba(0,129,201,0.04);
+        }
+
+        .controls { display: flex; gap: 6px; }
+
+        .action-btn {
+            flex: 1; padding: 6px; border-radius: 10px; border: none; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+
+        .btn-update { background: #e1f5fe; color: var(--primary); }
+        .btn-settings { background: #f5f5f5; color: #888; }
+
+        #settings-panel {
+            display: none; margin-top: 8px; border-top: 1px solid #f8f8f8; padding-top: 8px; max-height: 180px; overflow-y: auto;
+        }
+        .rate-edit-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f5f5f5; }
+        .rate-edit-row input { padding: 4px; font-size: 0.85rem; border-radius: 6px; border: 1px solid #ddd; width: 80px; text-align: right; font-weight: 700; }
+
+        /* ALIAS DISCRETO */
+        .alias-box {
+            margin: 6px auto 2px;
+            padding: 4px 12px;
+            background: rgba(241, 196, 15, 0.03);
+            border: 1px dashed rgba(241, 196, 15, 0.2);
+            border-radius: 15px;
+            font-size: 0.65rem;
+            color: #998c6a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .alias-box b { color: #b7950b; text-decoration: underline; }
+
+        #search-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; padding: 15px; justify-content: center;
+        }
+        .modal-content {
+            background: white; width: 100%; max-width: 420px; border-radius: 30px; padding: 15px; margin-top: 10px; max-height: 90vh; display: flex; flex-direction: column;
+        }
+        #search-input { width: 100%; padding: 10px; border-radius: 10px; border: 2px solid #eee; font-size: 1rem; margin-bottom: 10px; outline: none; }
+        .country-list { overflow-y: auto; flex-grow: 1; }
+        .country-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-size: 0.85rem; }
+
+        .footer {
+            margin-top: auto; padding: 5px 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; border-top: 1px solid rgba(0,0,0,0.01);
+        }
+        .footer-text { font-size: 0.7rem; color: #ccc; font-weight: 700; }
+        .footer-logo { width: 70px; height: auto; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<svg style="display:none">
+    <!-- LIBRERÍA DE BANDERAS SVG TOTAL -->
+    <symbol id="flag-ar" viewBox="0 0 144 90"><rect width="144" height="90" fill="#74acdf"/><rect y="30" width="144" height="30" fill="#fff"/><circle cx="72" cy="45" r="10" fill="#f6b40e"/></symbol>
+    <symbol id="flag-us" viewBox="0 0 3 2"><rect width="3" height="2" fill="#bf0a30"/><path d="M0 0.2h3M0 0.6h3M0 1h3M0 1.4h3M0 1.8h3" stroke="#fff" stroke-width="0.1"/><rect width="1.2" height="1" fill="#002868"/></symbol>
+    <symbol id="flag-eu" viewBox="0 0 3 2"><rect width="3" height="2" fill="#003399"/><circle cx="1.5" cy="1" r="0.5" fill="none" stroke="#ffcc00" stroke-width="0.1" stroke-dasharray="0.1,0.1"/></symbol>
+    <symbol id="flag-gb" viewBox="0 0 3 2"><rect width="3" height="2" fill="#00247d"/><path d="M0 0L3 2M0 2L3 0" stroke="#fff" stroke-width="0.2"/><path d="M1.5 0v2M0 1h3" stroke="#fff" stroke-width="0.3"/></symbol>
+    <symbol id="flag-br" viewBox="0 0 3 2"><rect width="3" height="2" fill="#009b3a"/><path d="M1.5 0.2L2.7 1 1.5 1.8 0.3 1z" fill="#fedf00"/><circle cx="1.5" cy="1" r="0.4" fill="#002776"/></symbol>
+    <symbol id="flag-cl" viewBox="0 0 3 2"><rect width="3" height="1" fill="#fff"/><rect y="1" width="3" height="1" fill="#d52b1e"/><rect width="1" height="1" fill="#0039a6"/></symbol>
+    <symbol id="flag-uy" viewBox="0 0 3 2"><rect width="3" height="2" fill="#fff"/><path d="M0 0.2h3M0 0.6h3M0 1h3M0 1.4h3M0 1.8h3" stroke="#0038a8" stroke-width="0.1"/><circle cx="0.4" cy="0.4" r="0.2" fill="#f6b40e"/></symbol>
+    <symbol id="flag-bo" viewBox="0 0 3 2"><rect width="3" height="0.66" fill="#e1141a"/><rect y="0.66" width="3" height="0.66" fill="#fdd116"/><rect y="1.32" width="3" height="0.66" fill="#007a33"/></symbol>
+    <symbol id="flag-es" viewBox="0 0 3 2"><rect width="3" height="0.5" fill="#aa151b"/><rect y="0.5" width="3" height="1" fill="#ffc400"/><rect y="1.5" width="3" height="0.5" fill="#aa151b"/></symbol>
+    <symbol id="flag-mx" viewBox="0 0 3 2"><rect width="1" height="2" fill="#006847"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ce1126"/></symbol>
+    <symbol id="flag-co" viewBox="0 0 3 2"><rect width="3" height="1" fill="#fcd116"/><rect y="1" width="3" height="0.5" fill="#003893"/><rect y="1.5" width="3" height="0.5" fill="#ce1126"/></symbol>
+    <symbol id="flag-pe" viewBox="0 0 3 2"><rect width="1" height="2" fill="#d52b1e"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#d52b1e"/></symbol>
+    <symbol id="flag-py" viewBox="0 0 3 2"><rect width="3" height="0.66" fill="#d52b1e"/><rect y="0.66" width="3" height="0.66" fill="#fff"/><rect y="1.32" width="3" height="0.66" fill="#0038a8"/></symbol>
+    <symbol id="flag-jp" viewBox="0 0 3 2"><rect width="3" height="2" fill="#fff"/><circle cx="1.5" cy="1" r="0.5" fill="#bc002d"/></symbol>
+    <symbol id="flag-cn" viewBox="0 0 3 2"><rect width="3" height="2" fill="#ee1c25"/><circle cx="0.5" cy="0.5" r="0.2" fill="#ffff00"/></symbol>
+    <symbol id="flag-ch" viewBox="0 0 1 1"><rect width="1" height="1" fill="red"/><rect x="0.4" y="0.2" width="0.2" height="0.6" fill="#fff"/><rect x="0.2" y="0.4" width="0.6" height="0.2" fill="#fff"/></symbol>
+    <symbol id="flag-in" viewBox="0 0 3 2"><rect width="3" height="0.66" fill="#ff9933"/><rect y="0.66" width="3" height="0.66" fill="#fff"/><rect y="1.32" width="3" height="0.66" fill="#128807"/></symbol>
+    <symbol id="flag-th" viewBox="0 0 3 2"><rect width="3" height="0.4" fill="red"/><rect y="0.4" width="3" height="0.4" fill="#fff"/><rect y="0.8" width="3" height="0.4" fill="#00247d"/><rect y="1.2" width="3" height="0.4" fill="#fff"/><rect y="1.6" width="3" height="0.4" fill="red"/></symbol>
+    <symbol id="flag-de" viewBox="0 0 3 2"><rect width="3" height="0.66" fill="black"/><rect y="0.66" width="3" height="0.66" fill="red"/><rect y="1.32" width="3" height="0.66" fill="#ffcc00"/></symbol>
+    <symbol id="flag-it" viewBox="0 0 3 2"><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ce2b37"/></symbol>
+    <symbol id="flag-fr" viewBox="0 0 3 2"><rect width="1" height="2" fill="#0055a4"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ef4135"/></symbol>
+    <symbol id="flag-ca" viewBox="0 0 3 2"><rect width="0.8" height="2" fill="red"/><rect x="0.8" width="1.4" height="2" fill="#fff"/><rect x="2.2" width="0.8" height="2" fill="red"/></symbol>
+    <symbol id="flag-kr" viewBox="0 0 3 2"><rect width="3" height="2" fill="#fff"/><circle cx="1.5" cy="1" r="0.4" fill="#cd2e3a"/></symbol>
+    <symbol id="flag-za" viewBox="0 0 3 2"><rect width="3" height="2" fill="#007a4d"/><path d="M0 0 L1.2 1 0 2" stroke="white" stroke-width="0.2"/></symbol>
+    <symbol id="flag-tr" viewBox="0 0 3 2"><rect width="3" height="2" fill="#e30a17"/><circle cx="1.2" cy="1" r="0.4" fill="#fff"/><circle cx="1.4" cy="1" r="0.3" fill="#e30a17"/></symbol>
+    <symbol id="flag-generic" viewBox="0 0 3 2"><rect width="3" height="2" fill="#ddd"/><text x="0.4" y="1.3" font-size="0.6" fill="#999">PAIS</text></symbol>
+
+    <symbol id="logo-iargent" viewBox="0 0 500 120">
+        <rect x="10" y="40" width="70" height="60" rx="15" fill="#2c3e50"/><circle cx="30" cy="70" r="8" fill="#ecf0f1"/><circle cx="60" cy="70" r="8" fill="#ecf0f1"/><rect x="40" y="20" width="10" height="25" fill="#2c3e50"/><circle cx="45" cy="20" r="6" fill="#2c3e50"/><rect x="80" y="10" width="60" height="40" rx="10" fill="#27ae60"/><path d="M100 50 L110 60 L120 50 Z" fill="#27ae60"/>
+        <text x="150" y="90" font-family="Arial Black" font-size="65" font-weight="900"><tspan fill="#34495e">IA</tspan><tspan fill="#f1c40f">R</tspan><tspan fill="#2980b9">G</tspan><tspan fill="#e67e22">E</tspan><tspan fill="#d35400">N</tspan><tspan fill="#c0392b">T</tspan></text>
+    </symbol>
+</svg>
+
+<div class="container">
+    <header>
+        <h1><svg class="mini-flag" style="width:24px"><use href="#flag-ar"/></svg> Calculadora de Viaje</h1>
+    </header>
+
+    <div class="card">
+        <!-- REFERENCIA ARRIBA -->
+        <div class="result-container">
+            <div class="edit-badge" onclick="openSearch('base')">✎</div>
+            <div class="result-label" id="result-label"></div>
+            <div class="result-value" id="result">$ 0</div>
+        </div>
+
+        <div class="swap-btn-container">
+            <button class="btn-swap" onclick="swapDirection()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/></svg></button>
+        </div>
+
+        <!-- INGRESO MONEDA -->
+        <div class="input-group">
+            <label id="input-label"></label>
+            <div class="input-wrapper" style="position:relative">
+                <div class="flag-icon-input" id="input-flag-icon"></div>
+                <input type="number" id="amount" placeholder="0" inputmode="decimal" oninput="calculate()">
+            </div>
+        </div>
+
+        <!-- GRILLA 4 BANDERAS SELECCIONABLES -->
+        <div class="currency-grid">
+            <div class="currency-slot"><div class="edit-badge" style="top:-3px; right:-3px" onclick="openSearch(0)">✎</div><button class="btn-toggle active" id="btn-0" onclick="selectSlot(0)"></button></div>
+            <div class="currency-slot"><div class="edit-badge" style="top:-3px; right:-3px" onclick="openSearch(1)">✎</div><button class="btn-toggle" id="btn-1" onclick="selectSlot(1)"></button></div>
+            <div class="currency-slot"><div class="edit-badge" style="top:-3px; right:-3px" onclick="openSearch(2)">✎</div><button class="btn-toggle" id="btn-2" onclick="selectSlot(2)"></button></div>
+            <div class="currency-slot"><div class="edit-badge" style="top:-3px; right:-3px" onclick="openSearch(3)">✎</div><button class="btn-toggle" id="btn-3" onclick="selectSlot(3)"></button></div>
+        </div>
+
+        <div class="controls">
+            <button class="action-btn btn-update" onclick="fetchRates()">🔄 Online</button>
+            <button class="action-btn btn-settings" onclick="toggleSettings()">⚙️ Precios</button>
+        </div>
+        
+        <div class="status-info" id="update-status">Precios locales cargados.</div>
+        <div id="settings-panel"><div id="manual-rates-list"></div></div>
+    </div>
+
+    <!-- ALIAS DISCRETO ABAJO -->
+    <div class="alias-box" onclick="copyAlias()">Te sirvió la app? Mi alias: <b>diego.tez</b> 📋</div>
+
+    <div class="footer">
+        <div class="footer-text">Creada y optimizada por</div>
+        <a href="https://iargent.io/" target="_blank" style="display:flex"><svg class="footer-logo"><use href="#logo-iargent"/></svg></a>
+    </div>
+</div>
+
+<div id="toast" style="position:fixed; bottom:60px; background:#333; color:white; padding:8px 16px; border-radius:20px; font-size:0.75rem; opacity:0; transition:0.3s; pointer-events:none; z-index:2000;">¡Alias copiado!</div>
+<div id="search-modal"><div class="modal-content"><input type="text" id="search-input" placeholder="Buscar país..." oninput="filterCountries()"><div class="country-list" id="country-list"></div><button class="action-btn" style="margin-top:10px; background:#eee; color:#333;" onclick="closeSearch()">Cerrar</button></div></div>
+<textarea id="copyHelper" style="position:absolute;left:-9999px"></textarea>
+
+<script>
+    // BASE DE DATOS DE 50 MONEDAS
+    const DB = [
+        { id: 'ARS', name: 'Argentina', currency: 'Pesos Argentinos', flag: '#flag-ar', rate: 1 },
+        { id: 'USD', name: 'EE.UU.', currency: 'Dólares', flag: '#flag-us', rate: 1400 },
+        { id: 'EUR', name: 'Unión Europea', currency: 'Euros', flag: '#flag-eu', rate: 1530 },
+        { id: 'GBP', name: 'Reino Unido', currency: 'Libras', flag: '#flag-gb', rate: 1780 },
+        { id: 'CHF', name: 'Suiza', currency: 'Francos', flag: '#flag-ch', rate: 1560 },
+        { id: 'CAD', name: 'Canadá', currency: 'Dólares', flag: '#flag-ca', rate: 1040 },
+        { id: 'AUD', name: 'Australia', currency: 'Dólares', flag: '#flag-au', rate: 930 },
+        { id: 'JPY', name: 'Japón', currency: 'Yenes', flag: '#flag-jp', rate: 9.5 },
+        { id: 'CNY', name: 'China', currency: 'Yuanes', flag: '#flag-cn', rate: 195 },
+        { id: 'BRL', name: 'Brasil', currency: 'Reales', flag: '#flag-br', rate: 275 },
+        { id: 'CLP', name: 'Chile', currency: 'Pesos', flag: '#flag-cl', rate: 1.45 },
+        { id: 'UYU', name: 'Uruguay', currency: 'Pesos', flag: '#flag-uy', rate: 35 },
+        { id: 'BOB', name: 'Bolivia', currency: 'Bolivianos', flag: '#flag-bo', rate: 200 },
+        { id: 'ESP', name: 'España', currency: 'Euros', flag: '#flag-es', rate: 1530 },
+        { id: 'MXN', name: 'México', currency: 'Pesos', flag: '#flag-mx', rate: 82 },
+        { id: 'PYG', name: 'Paraguay', currency: 'Guaraníes', flag: '#flag-py', rate: 0.18 },
+        { id: 'PEN', name: 'Perú', currency: 'Soles', flag: '#flag-pe', rate: 375 },
+        { id: 'COP', name: 'Colombia', currency: 'Pesos', flag: '#flag-co', rate: 0.35 },
+        { id: 'ITL', name: 'Italia', currency: 'Euros', flag: '#flag-it', rate: 1530 },
+        { id: 'FRA', name: 'Francia', currency: 'Euros', flag: '#flag-fr', rate: 1530 },
+        { id: 'DEU', name: 'Alemania', currency: 'Euros', flag: '#flag-de', rate: 1530 },
+        { id: 'TR', name: 'Turquía', currency: 'Liras', flag: '#flag-tr', rate: 43 },
+        { id: 'INR', name: 'India', currency: 'Rupias', flag: '#flag-in', rate: 16.8 },
+        { id: 'THB', name: 'Tailandia', currency: 'Bahts', flag: '#flag-th', rate: 39 },
+        { id: 'KRW', name: 'Corea del Sur', currency: 'Wons', flag: '#flag-kr', rate: 1.05 },
+        { id: 'ZAR', name: 'Sudáfrica', currency: 'Rands', flag: '#flag-za', rate: 75 },
+        { id: 'VND', name: 'Vietnam', currency: 'Dongs', flag: '#flag-generic', rate: 0.05 },
+        { id: 'SGD', name: 'Singapur', currency: 'Dólares', flag: '#flag-generic', rate: 1040 },
+        { id: 'NZD', name: 'N. Zelanda', currency: 'Dólares', flag: '#flag-generic', rate: 850 },
+        { id: 'SEK', name: 'Suecia', currency: 'Coronas', flag: '#flag-generic', rate: 135 },
+        { id: 'NOK', name: 'Noruega', currency: 'Coronas', flag: '#flag-generic', rate: 130 },
+        { id: 'DKK', name: 'Dinamarca', currency: 'Coronas', flag: '#flag-generic', rate: 210 },
+        { id: 'PLN', name: 'Polonia', currency: 'Zlotys', flag: '#flag-generic', rate: 350 },
+        { id: 'CZK', name: 'R. Checa', currency: 'Coronas', flag: '#flag-generic', rate: 60 },
+        { id: 'HUF', name: 'Hungría', currency: 'Forints', flag: '#flag-generic', rate: 3.9 },
+        { id: 'RON', name: 'Rumania', currency: 'Leus', flag: '#flag-generic', rate: 310 },
+        { id: 'RUB', name: 'Rusia', currency: 'Rublos', flag: '#flag-ru', rate: 15 },
+        { id: 'ILS', name: 'Israel', currency: 'Shekels', flag: '#flag-il', rate: 380 },
+        { id: 'SAR', name: 'A. Saudita', currency: 'Riyals', flag: '#flag-generic', rate: 375 },
+        { id: 'AED', name: 'E.A.U.', currency: 'Dirhams', flag: '#flag-generic', rate: 380 },
+        { id: 'KWD', name: 'Kuwait', currency: 'Dinares', flag: '#flag-generic', rate: 4500 },
+        { id: 'BHD', name: 'Baréin', currency: 'Dinares', flag: '#flag-generic', rate: 3700 },
+        { id: 'OMR', name: 'Omán', currency: 'Rials', flag: '#flag-generic', rate: 3600 },
+        { id: 'PHP', name: 'Filipinas', currency: 'Pesos', flag: '#flag-generic', rate: 25 },
+        { id: 'VES', name: 'Venezuela', currency: 'Bolívares', flag: '#flag-generic', rate: 35 },
+        { id: 'EGP', name: 'Egipto', currency: 'Libras', flag: '#flag-generic', rate: 28 },
+        { id: 'NGN', name: 'Nigeria', currency: 'Nairas', flag: '#flag-generic', rate: 0.9 },
+        { id: 'KES', name: 'Kenia', currency: 'Chelines', flag: '#flag-generic', rate: 10 },
+        { id: 'DZD', name: 'Argelia', currency: 'Dinares', flag: '#flag-generic', rate: 10 },
+        { id: 'MAD', name: 'Marruecos', currency: 'Dirhams', flag: '#flag-generic', rate: 140 },
+        { id: 'GHS', name: 'Ghana', currency: 'Cedis', flag: '#flag-generic', rate: 110 },
+        { id: 'DOP', name: 'R. Dominicana', currency: 'Pesos', flag: '#flag-generic', rate: 23 },
+        { id: 'HKD', name: 'Hong Kong', currency: 'Dólares', flag: '#flag-generic', rate: 180 }
+    ];
+
+    let slots = ['BRL', 'USD', 'EUR', 'CLP'], active = 0, baseId = 'ARS', inv = false, editT = null;
+
+    window.onload = () => {
+        const sS = localStorage.getItem('ac_v_final_s'); if(sS) slots = JSON.parse(sS);
+        const sB = localStorage.getItem('ac_v_final_b'); if(sB) baseId = sB;
+        const sR = localStorage.getItem('ac_v_final_r'); if(sR){ const r = JSON.parse(sR); DB.forEach(c => {if(r[c.id]) c.rate = r[c.id];}); }
+        renderSlots(); updateUI();
+    };
+
+    function renderSlots() {
+        slots.forEach((id, i) => {
+            const c = DB.find(x => x.id === id) || DB[1];
+            document.getElementById('btn-' + i).innerHTML = `<div class="btn-flag"><svg viewBox="0 0 3 2"><use href="${c.flag}"/></svg></div><span class="code">${c.id}</span><span class="name">${c.currency.split(' ')[0]}</span>`;
+        });
+    }
+
+    function selectSlot(i) { active = i; document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active')); document.getElementById('btn-' + i).classList.add('active'); updateUI(); }
+    
+    function updateUI() {
+        const s = DB.find(x => x.id === slots[active]), b = DB.find(x => x.id === baseId);
+        const sF = `<svg viewBox="0 0 3 2"><use href="${s.flag}"/></svg>`, bF = `<svg viewBox="0 0 3 2"><use href="${b.flag}"/></svg>`;
+        if(!inv) {
+            document.getElementById('input-label').innerHTML = `<div class="mini-flag">${sF}</div> MONTO EN ${s.currency.toUpperCase()}`;
+            document.getElementById('input-flag-icon').innerHTML = sF;
+            document.getElementById('result-label').innerHTML = `<div class="mini-flag">${bF}</div> ${b.currency.toUpperCase()} <div class="mini-flag">${bF}</div>`;
+        } else {
+            document.getElementById('input-label').innerHTML = `<div class="mini-flag">${bF}</div> MONTO EN ${b.currency.toUpperCase()}`;
+            document.getElementById('input-flag-icon').innerHTML = bF;
+            document.getElementById('result-label').innerHTML = `<div class="mini-flag">${sF}</div> ${s.currency.toUpperCase()} <div class="mini-flag">${sF}</div>`;
+        }
+        calculate(); renderSettings();
+    }
+
+    function calculate() {
+        const val = parseFloat(document.getElementById('amount').value) || 0;
+        const s = DB.find(x => x.id === slots[active]), b = DB.find(x => x.id === baseId);
+        const ratio = s.rate / b.rate;
+        let total = inv ? val / ratio : val * ratio;
+        const f = total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('result').innerText = (baseId === 'ARS' && !inv ? '$ ' : '') + f + ' ' + (inv ? s.id : b.id);
+    }
+
+    function swapDirection() { inv = !inv; updateUI(); }
+
+    function copyAlias() {
+        const h = document.getElementById('copyHelper'); h.value = 'diego.tez'; h.select(); document.execCommand('copy');
+        const t = document.getElementById('toast'); t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000);
+    }
+
+    function renderSettings() {
+        const list = document.getElementById('manual-rates-list'); list.innerHTML = '';
+        DB.filter(c => c.id !== 'ARS').forEach(c => {
+            const row = document.createElement('div'); row.className = 'rate-edit-row';
+            row.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="mini-flag" style="width:18px"><svg viewBox="0 0 3 2"><use href="${c.flag}"/></svg></div><span style="font-size:0.75rem;font-weight:700">${c.name}</span></div><div style="display:flex;align-items:center;gap:4px"><span>$</span><input type="number" step="0.01" value="${c.rate.toFixed(2)}" oninput="updateRate('${c.id}', this.value)"></div>`;
+            list.appendChild(row);
+        });
+    }
+
+    function updateRate(id, val) {
+        const c = DB.find(x => x.id === id); c.rate = parseFloat(val) || 0;
+        const save = {}; DB.forEach(x => save[x.id] = x.rate); localStorage.setItem('ac_v_final_r', JSON.stringify(save)); calculate();
+    }
+
+    function openSearch(t) { editT = t; document.getElementById('search-modal').style.display = 'flex'; filterCountries(); }
+    function closeSearch() { document.getElementById('search-modal').style.display = 'none'; }
+
+    function filterCountries() {
+        const q = document.getElementById('search-input').value.toLowerCase();
+        const list = document.getElementById('country-list'); list.innerHTML = '';
+        DB.filter(c => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)).forEach(c => {
+            const div = document.createElement('div'); div.className = 'country-item';
+            div.innerHTML = `<div class="mini-flag" style="width:35px"><svg viewBox="0 0 3 2"><use href="${c.flag}"/></svg></div><div><strong>${c.name}</strong> (${c.currency})</div>`;
+            div.onclick = () => { 
+                if(editT === 'base') { baseId = c.id; localStorage.setItem('ac_v_final_b', baseId); }
+                else { slots[editT] = c.id; localStorage.setItem('ac_v_final_s', JSON.stringify(slots)); renderSlots(); selectSlot(editT); }
+                closeSearch(); updateUI();
+            };
+            list.appendChild(div);
+        });
+    }
+
+    async function fetchRates() {
+        const btn = document.querySelector('.btn-update'), status = document.getElementById('update-status'); btn.innerText = "...";
+        try {
+            const res = await fetch('https://open.er-api.com/v6/latest/USD'); const data = await res.json();
+            if(data && data.rates) {
+                const usdArs = DB.find(x => x.id === 'USD').rate; 
+                DB.forEach(c => { if(c.id !== 'ARS' && c.id !== 'USD' && data.rates[c.id]) c.rate = usdArs / data.rates[c.id]; });
+                updateUI(); status.innerText = "Actualizado: " + new Date().toLocaleTimeString() + " via ExchangeRate-API";
+            }
+        } catch(e) { alert("Error de conexión."); }
+        btn.innerText = "🔄 Online";
+    }
+
+    function toggleSettings() { const p = document.getElementById('settings-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+</script>
+</body>
+</html>
